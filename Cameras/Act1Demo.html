@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FNAF Camera System</title>
+<link rel="stylesheet" type="text/css" href="Assets/Lock.css">
+<style>
+body {
+    margin: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* GAME CONTAINER */
+#gameContainer {
+    width: 1280px;
+    height: 1280px;
+    background: black;
+    position: relative;
+    overflow: hidden;
+}
+
+/* CAMERA VIEW */
+#cameraView {
+    position: absolute;
+    width: 200%;
+    height: 100%;
+    background-image: url("Assets/Images/camera/Cam1.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: left center;
+    transition: transform 3s steps(10), filter 0.1s;
+    filter: brightness(1) saturate(1);
+    z-index: 1;
+}
+/* UTILITY MENU WRAPPER */
+#utilityWrapper {
+    position: absolute;
+    bottom: 120px; /* position above flash button */
+    left: 50px;    /* align with flash button */
+    z-index: 16;   /* above flash button and flash overlay */
+}
+/* RESET SCREEN */
+#resetScreen {
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:black;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:3;
+}
+
+/* TEXT */
+#resetText {
+    color:lime;
+    font-family:monospace;
+    margin-bottom:20px;
+    font-size:25px;
+}
+
+/* CUBES */
+#resetCubes {
+    display:flex;
+    gap:10px;
+}
+
+.resetCube {
+    width:15px;
+    height:15px;
+    background:lime;
+    opacity:0.2;
+}
+/* MAIN UTILITY BUTTON */
+#utilityButton {
+    width: 100px;
+    height: 50px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid gray;
+    color: white;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.01s;
+}
+#utilityButton:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+}
+
+/* UTILITY MENU ITSELF */
+#utilityMenu {
+    position: absolute;
+    bottom: 60px; /* slightly above main button */
+    left: 0;
+    width: 500px;
+    background: black;
+    border: 1px solid lime;
+    display: none;
+    flex-direction: column;
+    padding: 1px;
+    font-family: "Courier New", monospace;
+    font-weight: bolder;
+    font-size: 30px;
+    color: lime;
+}
+/* On hover, change background and color */
+#utilityMenu div:hover {
+    background: white;
+    color: black;
+    transform: scale(1.05);
+}
+#utilityMenu div:hover {
+    background: green;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 0 10px limegreen;
+}
+/* KEEP MENU OPEN WHEN HOVERING WRAPPER */
+#utilityWrapper:hover #utilityMenu {
+    display: flex;
+}
+/* MENU ITEMS */
+#utilityMenu div {
+    padding: 8px 10px;
+    margin: 2px 0;
+    cursor: pointer;
+    transition: 0.01s;
+    border-radius: 3px;
+}
+
+/* HOVER EFFECT FOR EACH MENU ITEM */
+#utilityMenu div:hover {
+    background: rgba(0,255,0,0.2);
+    transform: scale(1.05);
+}
+
+/* LOST SCREEN */
+#lostScreen {
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:black;
+    color:lime;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-family:monospace;
+    font-size:30px;
+    z-index:2;
+    animation: blink 0.000001s infinite;
+}
+
+@keyframes blink {
+    0%,100% {opacity:1;}
+    50% {opacity:0;}
+}
+/* GRAIN LAYER */
+#grain {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: black;
+    mix-blend-mode: lighten;
+    opacity: 0.001;
+    z-index: 2;
+}
+
+/* TRANSITION (UNDER STATIC) */
+#transition {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: black;
+    top: -100%;
+    left: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.swipe {
+    animation: swipeAnim 0.5s ease;
+}
+
+@keyframes swipeAnim {
+    0% { top: -100%; }
+    50% { top: 0%; }
+    100% { top: 100%; }
+}
+
+/* STATIC VIDEO (TOP) */
+#staticVideo {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 4;
+    mix-blend-mode: screen;
+    opacity: 0.6;
+}
+
+/* CAMERA MAP */
+#cameraMap {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    width: 450px;
+    z-index: 5;
+}
+
+/* CAMERA BUTTONS */
+.camButton {
+    position: absolute;
+    width: 60px;
+    height: 30px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    cursor: pointer;
+    transition: 0.01s;
+    z-index: 6;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+.camButton:hover {
+    background: rgba(255,255,255,0.6);
+    transform: scale(1.1);
+}
+
+/* FLASH BUTTON */
+#flashButton {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    width: 100px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index:1;
+    font-weight: bold;
+    color: white;
+}
+
+#flashButton.cooldown {
+    background: rgba(0,0,0,0.4);
+    color: black;
+    cursor: not-allowed;
+    border: 2px solid black;
+    opacity: 0;
+}
+
+/* FLASH OVERLAY FULL WHITE */
+#flashOverlay {
+    position: absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background:white;
+    opacity:0;
+    pointer-events:none;
+    z-index:1;
+}
+
+/* VIGNETTE ON TOP OF FLASH */
+#vignette {
+    position: absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.9) 100%);
+    opacity: 1;
+    z-index: 8; /* ABOVE FLASH */
+    animation: flickerVignette 0.15s infinite;
+}
+@keyframes flickerVignette {
+    0% {opacity:0.55;}
+    50% {opacity:0.65;}
+    100% {opacity:0.6;}
+}
+
+/* FLASH COOLDOWN CUBES */
+#cooldownCubes {
+    position: absolute;
+    bottom: 50px;
+    left: 170px;
+    display: flex;
+    gap: 5px;
+    z-index: 2;
+}
+.cooldownCube {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+}
+.cooldownCube.active { background: white; }
+#repairText {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: lime;
+    font-family: "Courier New", monospace;
+    font-size: 18px;
+    display: none;
+    z-index: 20;
+    animation: blinkText 0.5s infinite;
+}
+
+@keyframes blinkText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+#batteryUI {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    text-align: right;
+    z-index: 20;
+}
+
+#batteryBars {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+    margin-top: 5px;
+}
+
+.batteryCube {
+    width: 12px;
+    height: 12px;
+    background: white;
+}
+
+/* blinking when low */
+.blinkBattery {
+    animation: batteryBlink 0.2s infinite;
+}
+
+@keyframes batteryBlink {
+    0%,100% {opacity:1;}
+    50% {opacity:0;}
+}
+
+
+
+#shutdownText {
+    position: relative;
+    z-index: 2; /* ABOVE VIDEO */
+    color: lime;
+    font-size: 28px;
+    text-align: center;
+}
+
+
+#rebootBtn {
+    position: relative;
+    z-index: 2; /* ABOVE VIDEO */
+
+    display: none;
+    background: black;
+    color: lime;
+    border: 1px solid lime;
+    padding: 10px 20px;
+    font-family: "Courier New", monospace;
+    cursor: pointer;
+}
+
+
+
+
+#shutdownOverlay {
+    position: absolute;
+
+    inset: 0; /* 🔥 stronger than top/left/width/height */
+
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    z-index: 21;
+    overflow: hidden;
+
+    pointer-events: all;
+}
+
+#bootVideo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+
+    z-index: 0; /* BACKGROUND */
+
+    pointer-events: none;
+    display: block;
+
+    image-rendering: pixelated;
+    filter: contrast(1.4) brightness(0.7);
+}
+
+
+#cameraWarning {
+    position: absolute;
+    top: 50px;
+    left: 20px;
+
+    color: red;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+
+    display: none;
+    z-index: 20;
+
+    text-shadow: 0 0 5px red;
+
+    animation: flickerWarning 0.2s infinite;
+}
+
+@keyframes flickerWarning {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#gameClock {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    color: white;
+    font-family: "Courier New", monospace;
+    font-size: 32px;
+    letter-spacing: 3px;
+
+    z-index: 20;
+
+    text-shadow: 0 0 10px white;
+}
+
+
+
+
+
+@keyframes clockGlitch {
+    0%   { transform: translateX(-50%) translate(0,0); opacity:1; }
+    20%  { transform: translateX(-50%) translate(-3px,2px); opacity:0.7; }
+    40%  { transform: translateX(-50%) translate(3px,-2px); opacity:1; }
+    60%  { transform: translateX(-50%) translate(-2px,1px); opacity:0.6; }
+    80%  { transform: translateX(-50%) translate(2px,-1px); opacity:1; }
+    100% { transform: translateX(-50%) translate(0,0); opacity:1; }
+}
+
+.glitchClock {
+    animation: clockGlitch 0.2s infinite;
+    color: red !important;
+    text-shadow: 
+        2px 0 red,
+        -2px 0 cyan,
+        0 0 10px red;
+}
+</style>
+</head>
+
+<body>
+    
+<div id="gameContainer">
+    <div id="shutdownOverlay">
+    <video id="bootVideo" autoplay muted loop>
+        <source src="Assets/Videos/BootScreen.mp4" type="video/mp4">
+    </video>
+
+    <div id="shutdownText">Shutting down cameras...</div>
+    <button id="rebootBtn">Reboot Cameras</button>
+</div>
+<div id="cameraWarning">
+    > SYSTEM ERROR: CAMERA RESOLUTION DEGRADING... INITIATE NETWORK RESET IMMEDIATELY.
+</div>
+    <!-- RESET LOADING SCREEN -->
+<div id="resetScreen">
+    <div id="resetText">Reconnecting...</div>
+    <div id="resetCubes">
+        <div class="resetCube"></div>
+        <div class="resetCube"></div>
+        <div class="resetCube"></div>
+        <div class="resetCube"></div>
+        <div class="resetCube"></div>
+    </div>
+</div>
+    <!-- CAMERA -->
+    <div id="cameraView"></div>
+<div id="repairText">Reconnecting cameras...</div>
+<div id="batteryUI">
+    <div id="batteryLabel">Flash Battery</div>
+    <div id="batteryBars">
+        <div class="batteryCube"></div>
+        <div class="batteryCube"></div>
+        <div class="batteryCube"></div>
+    </div>
+</div>
+    <!-- GRAIN -->
+    <div id="grain"></div>
+
+    <!-- TRANSITION -->
+    <div id="transition"></div>
+
+    <!-- STATIC VIDEO -->
+    <video id="staticVideo" autoplay muted loop>
+        <source src="Assets/Images/camera/Camstat.mp4" type="video/mp4">
+    </video>
+    <!-- AMBUSH VIDEO -->
+<video id="ambushVideo" style="
+    position:absolute;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:none;
+    z-index:2;
+"></video>
+
+<!-- CONNECTION LOST SCREEN -->
+<div id="lostScreen">
+    Can't connect to the camera
+</div>
+<div id="gameClock">12:00 AM</div>
+    <!-- MAP -->
+    <img id="cameraMap" src="Assets/Images/camera/CamMap.png">
+
+    <!-- CAMERA BUTTONS -->
+    <div class="camButton" style="top: 590px; left: 1050px;" onclick="changeCam(1)">1</div>
+    <div class="camButton" style="top: 950px; left: 910px;" onclick="changeCam(2)">2</div>
+    <div class="camButton" style="top: 880px; left: 770px;" onclick="changeCam(3)">3</div>
+    <div class="camButton" style="top: 950px; left: 1020px;" onclick="changeCam(4)">4</div>
+
+    <!-- FLASH BUTTON -->
+    <div id="flashButton">FLASH</div>
+
+    <!-- TOP UTILITY BUTTON -->
+<div id="utilityWrapper">
+    <div id="utilityButton">⚙</div>
+
+    <div id="utilityMenu">
+        <div onclick="resetCamera()">/ Reset Cameras</div>
+        <div onclick="rechargeFlash()">/ Recharge Flashlights</div>
+        <div onclick="fixCamera()">/ Network reset</div>
+        <div onclick="shutdownCameras()" style=" color: red;">/ Shutdown Cameras</div>
+    </div>
+</div>
+    <!-- FULL WHITE FLASH OVERLAY -->
+    <div id="flashOverlay"></div>
+
+    <!-- VIGNETTE -->
+    <div id="vignette"></div>
+
+    <!-- FLASH COOLDOWN CUBES -->
+    <div id="cooldownCubes">
+        <div class="cooldownCube"></div>
+        <div class="cooldownCube"></div>
+        <div class="cooldownCube"></div>
+        <div class="cooldownCube"></div>
+        <div class="cooldownCube"></div>
+    </div>
+</div>
+<audio id="bgMusic" src="Assets/Sounds/Cam.ogg" loop autoplay></audio>
+<audio id="ambientSound" src="Assets/Sounds/Ambi.ogg" loop autoplay></audio>
+
+
+<script>
+const camView = document.getElementById("cameraView");
+const transition = document.getElementById("transition");
+const flashButton = document.getElementById("flashButton");
+const flashOverlay = document.getElementById("flashOverlay");
+const vignette = document.getElementById("vignette");
+const cooldownCubes = document.querySelectorAll(".cooldownCube");
+
+// CAMERA SWITCH
+function changeCam(num) {
+    if (ambushActive) return;
+    currentCam = num; // ✅ TRACK CAMERA
+    // Detect spam properly
+    if (lastCam === num) {
+        spamCount++;
+    } else {
+        spamCount = 0;
+    }
+
+    lastCam = num;
+
+    // 🔥 MUCH STRONGER CHANCE
+    let baseChance = 0.05; // 5%
+    let spamBonus = spamCount * 0.15; // FAST increase
+    let finalChance = Math.min(baseChance + spamBonus, 0.8); // cap at 80%
+
+    console.log("Spam:", spamCount, "Chance:", finalChance);
+
+    if (Math.random() < finalChance) {
+        triggerAmbush();
+        return;
+    }
+
+    // normal camera switch
+    const sounds = [
+        "Assets/Sounds/Camera/PutCam.ogg",
+        "Assets/Sounds/Camera/PutCam0.ogg"
+    ];
+    new Audio(sounds[Math.floor(Math.random()*sounds.length)]).play();
+
+    transition.classList.add("swipe");
+
+    setTimeout(()=>{
+            if (num === 4 && anomalyCam4Active) {
+
+    camView.style.backgroundImage = `url("${anomalyCurrentBg}")`;
+
+    // 👁 PLAYER JUST SAW THE ANOMALY
+    handleAnomalySeen();
+} else {
+    camView.style.backgroundImage = `url("Assets/Images/camera/Cam${num}.png")`;
+}
+    },150);
+
+    setTimeout(()=>{
+        transition.classList.remove("swipe");
+        transition.style.top="-100%";
+    },350);
+}
+
+// CAMERA PAN
+let direction="right";
+const maxOffset=755;
+function panCamera(){
+    if(direction==="right"){ camView.style.transform=`translateX(-${maxOffset}px)`; direction="left"; }
+    else{ camView.style.transform=`translateX(0px)`; direction="right"; }
+    setTimeout(panCamera,5000);
+}
+setTimeout(panCamera,1000);
+
+// CAMERA FLICKER
+function cameraFlicker(){
+    if (cameraBroken) {
+        // When broken → DO NOT override darkness
+        let darkness = 1 - (degradationLevel * 0.3);
+        let blur = degradationLevel * 6;
+
+        if (darkness < 0) darkness = 0;
+
+        camView.style.filter = `
+            brightness(${darkness})
+            blur(${blur}px)
+        `;
+    } else {
+        // Normal state (keep your original vibe but darker tone)
+        let brightness = 0.6 + Math.random()*0.2;
+        let saturation = 0.6 + Math.random()*0.3;
+
+        camView.style.filter = `
+            brightness(${brightness})
+            saturate(${saturation})
+        `;
+    }
+}
+
+// FPS CONTROL 10 FPS + GRAIN
+let fps=20;
+let frameInterval=2000/fps;
+let lastTime=0;
+
+const grain=document.getElementById("grain");
+const canvas=document.createElement("canvas");
+const ctx=canvas.getContext("2d");
+canvas.width=1280;
+canvas.height=1280;
+grain.appendChild(canvas);
+
+function updateGrain(){
+    const imageData=ctx.createImageData(canvas.width,canvas.height);
+    const pixels=imageData.data;
+    for(let i=0;i<pixels.length;i+=5){
+        const v=Math.random()*255;
+        pixels[i]=v; pixels[i+1]=v; pixels[i+2]=v;
+        pixels[i+3]=25;
+    }
+    ctx.putImageData(imageData,0,0);
+}
+
+function animateGrain(){ grain.style.opacity=0.4 + Math.random()*0.4; }
+
+function gameLoop(currentTime){
+    if(currentTime-lastTime>=frameInterval){
+        cameraFlicker();
+        animateGrain();
+        updateGrain();
+        lastTime=currentTime;
+    }
+    requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+// FLASH MECHANIC WITH 5 SECOND COOLDOWN + CUBES
+let flashCooldown=false;
+let lastCam = null;
+let spamCount = 0;
+let ambushActive = false;
+function triggerAmbush() {
+    ambushActive = true;
+
+    const videos = [
+        "Assets/Videos/Ambush1.mp4",
+        "Assets/Videos/Ambush2.mp4",
+        "Assets/Videos/Ambush3.mp4"
+    ];
+
+    const vid = videos[Math.floor(Math.random()*videos.length)];
+
+    ambushVideo.src = vid;
+    ambushVideo.style.display = "block";
+    ambushVideo.play();
+
+    ambushVideo.onended = () => {
+        ambushVideo.style.display = "none";
+        lostScreen.style.display = "flex";
+
+// 🔊 AUDIO SWITCH
+bgMusic.pause();
+noConSound.currentTime = 0;
+noConSound.play();
+    };
+}
+function resetCamera() {
+    // Lock system
+    ambushActive = true;
+
+    // Hide lost screen
+    lostScreen.style.display = "none";
+
+    // Show reset screen
+    resetScreen.style.display = "flex";
+
+    // Start sound loop
+    resetSound.currentTime = 0;
+    resetSound.play();
+
+    // Random duration (3–5 seconds)
+    let duration = 3000 + Math.random() * 2000;
+
+    // Animate cubes
+    let index = 0;
+    resetCubes.forEach(c => c.style.opacity = "0.2");
+
+    const cubeAnim = setInterval(() => {
+        resetCubes.forEach(c => c.style.opacity = "0.2");
+
+        resetCubes[index].style.opacity = "1";
+
+        index++;
+        if (index >= resetCubes.length) index = 0;
+
+    }, 200);
+
+    // Finish reset
+    setTimeout(() => {
+        clearInterval(cubeAnim);
+
+        // Stop sound
+        resetSound.pause();
+
+        // Hide reset screen
+        resetScreen.style.display = "none";
+
+        // Reset system
+        ambushActive = false;
+        spamCount = 0;
+        lastCam = null;
+        // 🔊 RESTORE AUDIO
+noConSound.pause();
+bgMusic.play();
+
+        // Restore camera
+        camView.style.transform = "translateX(0px)";
+
+    }, duration);
+}
+const resetScreen = document.getElementById("resetScreen");
+const resetCubes = document.querySelectorAll(".resetCube");
+
+let resetSound = new Audio("Assets/Sounds/Boop.ogg");
+resetSound.loop = true;
+// ANOMALY SYSTEM FOR CAMERA 4
+let anomalyCam4Active = false;
+let anomalyCurrentBg = null;
+
+// Trigger anomaly: replaces camera background
+function triggerAnomalyCam4() {
+    if(anomalyCam4Active) return;
+
+    const anomalyOptions = [
+        "Assets/Images/camera/Cam4/ano1.png",
+        "Assets/Images/camera/Cam4/ano2.png",
+        "Assets/Images/camera/Cam4/ano3.png"
+    ];
+
+    const selected = anomalyOptions[Math.floor(Math.random() * anomalyOptions.length)];
+
+    anomalyCam4Active = true;
+    anomalyCurrentBg = selected;
+
+    // Show if on cam 4
+    if (currentCam === 4) {
+        if (currentCam === 4) {
+
+    camView.style.backgroundImage = `url("${selected}")`;
+    camView.style.opacity = 0;
+
+    let opacity = 0;
+
+    const fadeIn = setInterval(() => {
+
+        // flicker effect
+        let flicker = Math.random() * 0.4;
+
+        opacity += 0.08;
+
+        camView.style.opacity = opacity - flicker;
+
+        if (opacity >= 1) {
+            clearInterval(fadeIn);
+            camView.style.opacity = 1;
+
+            // 👁 PLAYER HAS SEEN IT
+            handleAnomalySeen();
+        }
+
+    }, 50);
+}
+    }
+
+    // ⏱ START TIMER
+    anomalyStartTime = Date.now();
+
+    anomalyTimer = setTimeout(() => {
+        if (anomalyCam4Active) {
+            anomalyTimeoutEffect();
+        }
+    }, 20000); // 20 seconds
+}
+
+// Reset anomaly: go back to normal camera bg
+function resetAnomalyCam4() {
+    if(!anomalyCam4Active) return;
+
+    anomalyCam4Active = false;
+    anomalyCurrentBg = null;
+
+    // Only reset visually if on cam 4
+    if (currentCam === 4) {
+        camView.style.backgroundImage = `url("Assets/Images/camera/Cam4.png")`;
+    }
+}
+
+// Flash button resets anomaly if active
+flashButton.addEventListener("click", () => {
+
+    if (flashCooldown || isCharging) return;
+    if (batteryLevel <= 0) return;
+
+    // 🔋 CONSUME BATTERY
+    batteryLevel--;
+    updateBatteryUI();
+
+    // LOCK if empty
+    if (batteryLevel <= 0) {
+        flashButton.classList.add("cooldown");
+        flashButton.style.pointerEvents = "none";
+    }
+
+    flashCooldown = true;
+    flashButton.classList.add("cooldown");
+
+    cooldownCubes.forEach(c=>c.classList.remove("active"));
+    let cubeIndex=0;
+
+    const cubeInterval=setInterval(()=>{
+        if(cubeIndex>=cooldownCubes.length) clearInterval(cubeInterval);
+        else {
+            cooldownCubes[cubeIndex].classList.add("active");
+            cubeIndex++;
+        }
+    },1000);
+
+    // SOUND + FLASH
+    new Audio("Assets/Sounds/Camera/FlashCam.ogg").play();
+
+    camView.style.filter="brightness(9999) saturate(999)";
+    flashOverlay.style.transition="none";
+    flashOverlay.style.opacity="0";
+
+    setTimeout(()=>{
+        flashOverlay.style.transition="opacity 3s ease-out";
+        flashOverlay.style.opacity="0";
+
+        let start=null;
+        function fade(timestamp){
+            if(!start) start=timestamp;
+            const elapsed=Math.min(timestamp-start,1500);
+            const progress=elapsed/1500;
+
+            const b=5-(progress*(5-1));
+            const s=2.5-(progress*(2.5-1));
+
+            camView.style.filter=`brightness(${b}) saturate(${s})`;
+
+            if(progress<1) requestAnimationFrame(fade);
+        }
+        requestAnimationFrame(fade);
+    },50);
+
+    // cooldown reset
+    setTimeout(()=>{
+        flashCooldown=false;
+
+        if (batteryLevel > 0) {
+            flashButton.classList.remove("cooldown");
+        }
+
+        cooldownCubes.forEach(c=>c.classList.remove("active"));
+    },5000);
+
+    // 👻 anomaly reset
+      if(anomalyCam4Active){
+
+    // ⛔ cancel timer
+    clearTimeout(anomalyTimer);
+
+    resetAnomalyCam4();
+}
+
+});
+
+// Randomly trigger anomaly even if player is not on camera 4
+setInterval(()=>{
+    if(!anomalyCam4Active && Math.random() < 0.3){
+        triggerAnomalyCam4();
+    }
+}, 10000 + Math.random()*15000); // every 10-25s
+
+
+const bgMusic = document.getElementById("bgMusic");
+const ambientSound = document.getElementById("ambientSound");
+
+// volume control (important so it's not too loud)
+bgMusic.volume = 0.5;
+ambientSound.volume = 1;
+
+// function to start audio
+function startAudio() {
+    bgMusic.play();
+    ambientSound.play();
+}
+let cameraBroken = false;
+let degradationLevel = 0;
+let maxDegradation = 3;
+
+
+
+function applyCameraDegradation() {
+    if (!cameraBroken) return;
+
+    degradationLevel++;
+
+    if (degradationLevel > maxDegradation) {
+        degradationLevel = maxDegradation;
+    }
+
+    // DARKNESS + HEAVY BLUR
+    let darkness = 1 - (degradationLevel * 0.3); // gets darker
+    let blur = degradationLevel * 6; // VERY strong blur
+
+    if (darkness < 0) darkness = 0;
+
+    camView.style.filter = `
+        brightness(${darkness})
+        blur(${blur}px)
+    `;
+
+    camView.style.imageRendering = "pixelated";
+
+    console.log("Degradation Level:", degradationLevel);
+}
+
+function tryBreakCamera() {
+    if (cameraBroken) return;
+
+    // Chance every cycle
+    if (Math.random() < 0.1) { // 30% chance
+        cameraBroken = true;
+        degradationLevel = 1;
+        console.log("Camera BROKEN!");
+    }
+}
+
+setInterval(() => {
+    tryBreakCamera();
+
+    if (cameraBroken) {
+        applyCameraDegradation();
+    }
+
+}, 8000); // every 8 seconds
+
+const repairText = document.getElementById("repairText");
+
+function fixCamera() {
+    if (!cameraBroken) return;
+
+    console.log("Repairing camera...");
+
+    cameraBroken = false;
+
+    // Show text
+    repairText.style.display = "block";
+        repairSound.currentTime = 0;
+    repairSound.play();
+    // Random repair duration (5–10 seconds)
+    let repairDuration = 5000 + Math.random() * 5000;
+    let startTime = Date.now();
+
+    let repairInterval = setInterval(() => {
+
+        // Progress based reduction
+        let elapsed = Date.now() - startTime;
+        let progress = elapsed / repairDuration;
+
+        // Smooth decrease
+        degradationLevel = (6 - progress) * maxDegradation;
+
+        if (degradationLevel < 0) degradationLevel = 0;
+
+        let darkness = 1 - (degradationLevel * 0.3);
+        let blur = degradationLevel * 6;
+
+        if (darkness < 0) darkness = 0;
+
+        // 🔥 STUTTER / GLITCH FEEL
+        let jitter = Math.random() * 6;
+
+        camView.style.filter = `
+            brightness(${darkness})
+            blur(${blur + jitter}px)
+        `;
+
+        // Finish repair
+        if (progress >= 1) {
+            clearInterval(repairInterval);
+
+            camView.style.filter = "brightness(1) saturate(1)";
+            // 🔓 UNLOCK FLASH
+flashCooldown = false;
+
+if (batteryLevel > 0) {
+    flashButton.classList.remove("cooldown");
+    flashButton.style.pointerEvents = "auto";
+}
+
+// 🔴 HIDE WARNING
+cameraWarning.style.display = "none";
+            camView.style.imageRendering = "auto";
+
+            repairText.style.display = "none";
+                        // STOP REPAIR SOUND
+            repairSound.pause();
+
+            console.log("Camera fully repaired");
+        }
+
+    }, 80);
+}
+const repairSound = new Audio("Assets/Sounds/Fixing.ogg");
+repairSound.loop = true;
+
+
+let batteryLevel = 3;
+const batteryCubes = document.querySelectorAll(".batteryCube");
+let isCharging = false;
+
+
+function updateBatteryUI() {
+    batteryCubes.forEach((cube, index) => {
+        cube.style.opacity = index < batteryLevel ? "1" : "0.2";
+        cube.classList.remove("blinkBattery");
+    });
+
+    if (batteryLevel === 1) {
+        batteryCubes[0].classList.add("blinkBattery");
+    }
+}
+
+function rechargeFlash() {
+    if (isCharging) return;
+
+    console.log("Charging flashlight...");
+
+    isCharging = true;
+
+    // Disable flash while charging
+    flashButton.classList.add("cooldown");
+    flashButton.style.pointerEvents = "none";
+
+    let chargeDuration = 5000 + Math.random() * 3000; // 5–8 sec
+    let startTime = Date.now();
+
+    let index = 0;
+
+    // Start charging animation
+    const chargeAnim = setInterval(() => {
+
+        // Reset all cubes
+        batteryCubes.forEach(c => {
+            c.style.opacity = "0.2";
+            c.classList.remove("blinkBattery");
+        });
+
+        // Light up current cube
+        if (batteryCubes[index]) {
+            batteryCubes[index].style.opacity = "1";
+        }
+
+        index++;
+        if (index >= batteryCubes.length) index = 0;
+
+    }, 200); // speed of animation
+
+    // Finish charging
+    setTimeout(() => {
+        clearInterval(chargeAnim);
+
+        batteryLevel = 3;
+        updateBatteryUI();
+
+        isCharging = false;
+
+        // Enable flash again
+        flashButton.classList.remove("cooldown");
+        flashButton.style.pointerEvents = "auto";
+
+        new Audio("Assets/Sounds/Press1.ogg").play();
+
+        console.log("Flash fully charged");
+
+    }, chargeDuration);
+}
+updateBatteryUI();
+
+const shutdownOverlay = document.getElementById("shutdownOverlay");
+const shutdownText = document.getElementById("shutdownText");
+const rebootBtn = document.getElementById("rebootBtn");
+
+// SHUTDOWN FUNCTION
+function shutdownCameras() {
+
+    console.log("Shutting down cameras...");
+
+    shutdownOverlay.style.display = "flex";
+    shutdownText.innerText = "Shutting down cameras...";
+    rebootBtn.style.display = "none";
+
+    // Play shutdown sound
+    shutdownSound.currentTime = 0;
+    shutdownSound.play();
+
+    // Stop ONLY camera BGM
+    bgMusic.pause();
+
+    // Show reboot button after 3s
+    setTimeout(() => {
+        rebootBtn.style.display = "block";
+    }, 3000);
+}
+rebootBtn.addEventListener("click", () => {
+
+    rebootBtn.style.display = "none";
+
+    // Step 1
+    shutdownText.innerText = "Rebooting system...";
+    
+    setTimeout(() => {
+
+        // Step 2
+        shutdownText.innerText = "Rebooting cameras...";
+
+        setTimeout(() => {
+
+            // Step 3: fake terminal loading
+            let dots = "";
+            let loading = setInterval(() => {
+                dots += ".";
+                shutdownText.innerText = "Running diagnostics" + dots;
+
+                if (dots.length > 5) dots = "";
+            }, 200);
+
+            setTimeout(() => {
+                clearInterval(loading);
+
+                // Step 4: Welcome
+               shutdownText.innerText = "Welcome";
+
+// 🔊 Play startup sound
+startupSound.currentTime = 0;
+startupSound.play();
+
+                setTimeout(() => {
+
+                    // Fade out overlay
+                    shutdownOverlay.style.transition = "opacity 1s";
+                    shutdownOverlay.style.opacity = "0";
+
+                    setTimeout(() => {
+                        shutdownOverlay.style.display = "none";
+                        shutdownOverlay.style.opacity = "1";
+
+                        // Resume music
+                        bgMusic.play();
+
+                    }, 1000);
+
+                }, 1500);
+
+            }, 3000);
+
+        }, 2000);
+
+    }, 2000);
+});
+
+const shutdownSound = new Audio("Assets/Sounds/Shutdown.ogg");
+const startupSound = new Audio("Assets/Sounds/Startup.ogg");
+const cameraWarning = document.getElementById("cameraWarning");
+
+function tryBreakCamera() {
+    if (cameraBroken) return;
+
+    if (Math.random() < 0.3) {
+        cameraBroken = true;
+        degradationLevel = 1;
+
+        console.log("Camera BROKEN!");
+
+        // 🔒 LOCK FLASH
+        flashCooldown = true;
+        flashButton.classList.add("cooldown");
+        flashButton.style.pointerEvents = "none";
+
+        // 🔴 SHOW WARNING
+        cameraWarning.style.display = "block";
+    }
+}
+
+let currentCam = 1;
+
+const noConSound = new Audio("Assets/Sounds/NoCon.ogg");
+noConSound.loop = true;
+noConSound.volume = 1;
+
+const gameClock = document.getElementById("gameClock");
+
+let gameHour = 12;
+let gameMinute = 0;
+let isAM = true;
+
+const tickSound = new Audio("Assets/Sounds/Tick.ogg");
+tickSound.volume = 0.5;
+
+function updateClock() {
+
+    // 🔊 PLAY TICK EVERY MINUTE
+    tickSound.currentTime = 0;
+    tickSound.play();
+
+    // Add 1 minute
+    gameMinute++;
+
+    if (gameMinute >= 60) {
+        gameMinute = 0;
+        gameHour++;
+
+        if (gameHour === 13) {
+            gameHour = 1;
+        }
+    }
+
+    let displayMinute = gameMinute.toString().padStart(2, "0");
+    gameClock.textContent = `${gameHour}:${displayMinute} AM`;
+
+    // WIN CONDITION
+    if (gameHour === 6 && gameMinute === 0) {
+        setTimeout(() => {
+            window.location.href = "Win.html";
+        }, 1000);
+    }
+}
+
+setInterval(updateClock, 1000); // 1 second = 1 minute
+
+
+
+let anomalyTimer = null;
+let anomalyStartTime = 0;
+
+
+
+function anomalyTimeoutEffect() {
+
+    console.log("Anomaly ignored → applying penalty");
+
+    // 🔊 SOUND
+    const vanishSound = new Audio("Assets/Sounds/AnomalyVanish.ogg");
+    vanishSound.play();
+
+    // 🎬 GLITCH FADE EFFECT
+    let opacity = 1;
+
+    const fadeInterval = setInterval(() => {
+        opacity -= 0.08;
+
+        camView.style.opacity = opacity;
+
+        if (opacity <= 0) {
+            clearInterval(fadeInterval);
+
+            // RESET CAMERA BG
+            camView.style.opacity = 1;
+            camView.style.backgroundImage = `url("Assets/Images/camera/Cam4.png")`;
+
+            anomalyCam4Active = false;
+            anomalyCurrentBg = null;
+
+            applyTimePenalty();
+        }
+
+    }, 50);
+}
+
+
+function applyTimePenalty() {
+
+    // random penalty (30–50 minutes)
+    let penalty = Math.floor(Math.random() * 21) + 30;
+
+    console.log("Time penalty (backwards):", penalty);
+
+    gameMinute -= penalty;
+
+    // 🔁 HANDLE UNDERFLOW
+    while (gameMinute < 0) {
+        gameMinute += 60;
+        gameHour--;
+
+        if (gameHour === 0) gameHour = 12;
+    }
+
+    // 🔴 ADD IT HERE 👇
+    glitchClockEffect();
+
+    // 🔊 optional sound
+    new Audio("Assets/Sounds/TimeGlitch.ogg").play();
+}
+
+
+
+function glitchClockEffect() {
+
+    gameClock.classList.add("glitchClock");
+
+    // random flicker duration (0.5–1.2 sec)
+    let duration = 500 + Math.random() * 700;
+
+    setTimeout(() => {
+        gameClock.classList.remove("glitchClock");
+    }, duration);
+}
+
+let anomalySeen = false;      // player has seen anomaly
+let anomalyIntroPlayed = false; // sound already played once
+
+
+function handleAnomalySeen() {
+
+    if (!anomalySeen) {
+        anomalySeen = true;
+
+        // 🔊 play ONLY once in entire game
+        if (!anomalyIntroPlayed) {
+            anomalyIntroPlayed = true;
+
+            const scareSound = new Audio("Assets/Sounds/AnomalyIntro.ogg");
+            scareSound.volume = 1;
+            scareSound.play();
+        }
+    }
+}
+</script>
+
+</body>
+</html>

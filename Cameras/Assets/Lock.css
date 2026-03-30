@@ -1,0 +1,11 @@
+body, p {
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+img {
+    pointer-events: none; /* Prevent dragging images */
+    -webkit-user-drag: none; /* Disable dragging in WebKit browsers */
+}
